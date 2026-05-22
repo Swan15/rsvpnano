@@ -33,6 +33,13 @@ class App {
     Left = 1,
   };
 
+  enum class ColorThemeMode : uint8_t {
+    Classic = 0,
+    Amber = 1,
+    Matrix = 2,
+    Cyber = 3,
+  };
+
   App();
 
   void begin();
@@ -183,6 +190,7 @@ class App {
   void openMainMenu(uint32_t nowMs);
   void cycleBrightness();
   void cycleThemeMode(uint32_t nowMs);
+  void cycleColorThemeMode(uint32_t nowMs);
   void cycleUiLanguage(uint32_t nowMs);
   void cycleReaderMode(uint32_t nowMs);
   void cycleHandednessMode(uint32_t nowMs);
@@ -265,6 +273,7 @@ class App {
   String pacingDelayLabel(uint16_t delayMs) const;
   String firmwareUpdateMenuLabel() const;
   String themeModeLabel() const;
+  String colorThemeLabel() const;
   String phantomWordsLabel() const;
   String focusHighlightLabel() const;
   String uiLanguageLabel() const;
@@ -548,6 +557,7 @@ class App {
   PauseMode pauseMode_ = PauseMode::SentenceEnd;
   bool darkMode_ = true;
   bool nightMode_ = false;
+  ColorThemeMode colorThemeMode_ = ColorThemeMode::Classic;
   UiLanguage uiLanguage_ = UiLanguage::English;
   ReaderMode readerMode_ = ReaderMode::Rsvp;
   HandednessMode handednessMode_ = HandednessMode::Right;

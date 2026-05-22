@@ -189,6 +189,17 @@ DisplayManager::ReaderTypeface sanitizeReaderTypeface(DisplayManager::ReaderType
   return DisplayManager::ReaderTypeface::Standard;
 }
 
+DisplayManager::ColorTheme sanitizeColorTheme(DisplayManager::ColorTheme colorTheme) {
+  switch (colorTheme) {
+    case DisplayManager::ColorTheme::Classic:
+    case DisplayManager::ColorTheme::Amber:
+    case DisplayManager::ColorTheme::Matrix:
+    case DisplayManager::ColorTheme::Cyber:
+      return colorTheme;
+  }
+  return DisplayManager::ColorTheme::Classic;
+}
+
 int clampTypographyTracking(int value) {
   return std::max(kTypographyTrackingMin, std::min(kTypographyTrackingMax, value));
 }
@@ -902,6 +913,17 @@ void DisplayManager::setNightMode(bool nightMode) {
   lastRenderKey_ = "";
 }
 
+void DisplayManager::setColorTheme(ColorTheme colorTheme) {
+  colorTheme = sanitizeColorTheme(colorTheme);
+  if (colorTheme_ == colorTheme) {
+    return;
+  }
+
+  colorTheme_ = colorTheme;
+  tickerPlaybackFrameActive_ = false;
+  lastRenderKey_ = "";
+}
+
 void DisplayManager::setUiOrientation(BoardConfig::UiOrientation orientation) {
   if (uiOrientation_ == orientation) {
     return;
@@ -947,6 +969,8 @@ DisplayManager::TypographyConfig DisplayManager::typographyConfig() const {
 bool DisplayManager::darkMode() const { return darkMode_; }
 
 bool DisplayManager::nightMode() const { return nightMode_; }
+
+DisplayManager::ColorTheme DisplayManager::colorTheme() const { return colorTheme_; }
 
 bool DisplayManager::begin() {
   ESP_LOGI(kDisplayTag, "Begin");
@@ -1069,6 +1093,19 @@ uint16_t DisplayManager::backgroundColor() const {
 }
 
 uint16_t DisplayManager::wordColor() const {
+  if (darkMode_ || nightMode_) {
+    switch (colorTheme_) {
+      case ColorTheme::Amber:
+        return rgb565(255, 190, 96);
+      case ColorTheme::Matrix:
+        return rgb565(116, 255, 136);
+      case ColorTheme::Cyber:
+        return rgb565(152, 226, 255);
+      case ColorTheme::Classic:
+      default:
+        break;
+    }
+  }
   if (nightMode_) {
     return kNightWordColor;
   }
@@ -1076,6 +1113,19 @@ uint16_t DisplayManager::wordColor() const {
 }
 
 uint16_t DisplayManager::focusColor() const {
+  if (darkMode_ || nightMode_) {
+    switch (colorTheme_) {
+      case ColorTheme::Amber:
+        return rgb565(255, 108, 54);
+      case ColorTheme::Matrix:
+        return rgb565(33, 216, 90);
+      case ColorTheme::Cyber:
+        return rgb565(255, 85, 198);
+      case ColorTheme::Classic:
+      default:
+        break;
+    }
+  }
   if (nightMode_) {
     return kNightFocusColor;
   }
@@ -1097,10 +1147,23 @@ uint16_t DisplayManager::footerColor() const {
 }
 
 uint16_t DisplayManager::selectedBarColor() const {
-  return nightMode_ ? focusColor() : kFocusLetterColor;
+  return focusColor();
 }
 
 uint16_t DisplayManager::focusTimerBreakColor() const {
+  if (darkMode_ || nightMode_) {
+    switch (colorTheme_) {
+      case ColorTheme::Amber:
+        return rgb565(204, 122, 52);
+      case ColorTheme::Matrix:
+        return rgb565(42, 154, 80);
+      case ColorTheme::Cyber:
+        return rgb565(76, 146, 224);
+      case ColorTheme::Classic:
+      default:
+        break;
+    }
+  }
   return nightMode_ ? rgb565(112, 176, 126) : rgb565(68, 132, 88);
 }
 

@@ -12,6 +12,7 @@ class FocusTimer {
     RsvpNano,
     StrengthLabs,
     SelfCare,
+    Pomodoro,
     Other,
     None = 0xFF,
   };
@@ -81,6 +82,9 @@ class FocusTimer {
   void clearSession();
   void startMode(TimerMode mode, uint32_t nowMs, uint32_t durationMs,
                  OrientationState startOrientation);
+  uint32_t touchDurationMs() const;
+  uint32_t workDurationMs() const;
+  uint32_t breakDurationMs() const;
   void stopActiveTimer();
   void completeActiveTimer();
   bool timerExpired(uint32_t nowMs) const;

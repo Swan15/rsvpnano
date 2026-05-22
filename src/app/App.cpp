@@ -159,15 +159,16 @@ constexpr size_t kSettingsHomeTypographyIndex = 3;
 constexpr size_t kSettingsHomeWifiIndex = 4;
 constexpr size_t kSettingsHomeUpdateIndex = 5;
 constexpr size_t kSettingsDisplayThemeIndex = 1;
-constexpr size_t kSettingsDisplayBrightnessIndex = 2;
-constexpr size_t kSettingsDisplayHandednessIndex = 3;
-constexpr size_t kSettingsDisplayFooterIndex = 4;
-constexpr size_t kSettingsDisplayBatteryIndex = 5;
-constexpr size_t kSettingsDisplayScreensaverIndex = 6;
-constexpr size_t kSettingsDisplayReaderBatteryIndex = 7;
-constexpr size_t kSettingsDisplayReaderChapterIndex = 8;
-constexpr size_t kSettingsDisplayReaderProgressIndex = 9;
-constexpr size_t kSettingsDisplayLanguageIndex = 10;
+constexpr size_t kSettingsDisplayColorThemeIndex = 2;
+constexpr size_t kSettingsDisplayBrightnessIndex = 3;
+constexpr size_t kSettingsDisplayHandednessIndex = 4;
+constexpr size_t kSettingsDisplayFooterIndex = 5;
+constexpr size_t kSettingsDisplayBatteryIndex = 6;
+constexpr size_t kSettingsDisplayScreensaverIndex = 7;
+constexpr size_t kSettingsDisplayReaderBatteryIndex = 8;
+constexpr size_t kSettingsDisplayReaderChapterIndex = 9;
+constexpr size_t kSettingsDisplayReaderProgressIndex = 10;
+constexpr size_t kSettingsDisplayLanguageIndex = 11;
 constexpr size_t kSettingsPacingReadingModeIndex = 1;
 constexpr size_t kSettingsPacingPauseModeIndex = 2;
 constexpr size_t kSettingsPacingWpmIndex = 3;
@@ -195,6 +196,7 @@ constexpr const char *kPrefWpm = "wpm";
 constexpr const char *kPrefBrightness = "bright";
 constexpr const char *kPrefDarkMode = "dark";
 constexpr const char *kPrefNightMode = "night";
+constexpr const char *kPrefColorTheme = "color_theme";
 constexpr const char *kPrefUiLanguage = "ui_lang";
 constexpr const char *kPrefReaderMode = "read_mode";
 constexpr const char *kPrefHandedness = "handed";
@@ -309,6 +311,34 @@ int nextCyclicSetting(int value, int minValue, int maxValue, int step = 1) {
     next = minValue;
   }
   return next;
+}
+
+App::ColorThemeMode colorThemeModeFromSetting(uint8_t value) {
+  switch (value) {
+    case static_cast<uint8_t>(App::ColorThemeMode::Amber):
+      return App::ColorThemeMode::Amber;
+    case static_cast<uint8_t>(App::ColorThemeMode::Matrix):
+      return App::ColorThemeMode::Matrix;
+    case static_cast<uint8_t>(App::ColorThemeMode::Cyber):
+      return App::ColorThemeMode::Cyber;
+    case static_cast<uint8_t>(App::ColorThemeMode::Classic):
+    default:
+      return App::ColorThemeMode::Classic;
+  }
+}
+
+DisplayManager::ColorTheme displayColorThemeForMode(App::ColorThemeMode mode) {
+  switch (mode) {
+    case App::ColorThemeMode::Amber:
+      return DisplayManager::ColorTheme::Amber;
+    case App::ColorThemeMode::Matrix:
+      return DisplayManager::ColorTheme::Matrix;
+    case App::ColorThemeMode::Cyber:
+      return DisplayManager::ColorTheme::Cyber;
+    case App::ColorThemeMode::Classic:
+    default:
+      return DisplayManager::ColorTheme::Classic;
+  }
 }
 
 uint16_t nextReaderWpmSetting(uint16_t value) {
@@ -712,6 +742,9 @@ void App::begin() {
       kTypographyGuideGapMin, kTypographyGuideGapMax));
   darkMode_ = preferences_.getBool(kPrefDarkMode, darkMode_);
   nightMode_ = preferences_.getBool(kPrefNightMode, nightMode_);
+  colorThemeMode_ =
+      colorThemeModeFromSetting(preferences_.getUChar(
+          kPrefColorTheme, static_cast<uint8_t>(colorThemeMode_)));
   applyHandednessSettings(0, false);
   applyDisplayPreferences(0, false);
   applyTypographySettings(0, false);
@@ -1117,7 +1150,18 @@ void App::handleBootButton(uint32_t nowMs) {
   if (button_.isHeld() && !bootButtonLongPressHandled_ &&
       button_.heldDurationMs(nowMs) >= kThemeToggleHoldMs) {
     bootButtonLongPressHandled_ = true;
-    cycleThemeMode(nowMs);
+    if (state_ == AppState::Paused || state_ == AppState::Playing) {
+      playLocked_ = true;
+      touchPlayHeld_ = false;
+      pauseAtSentenceEndRequested_ = false;
+      wpmFeedbackVisible_ = false;
+      if (state_ != AppState::Playing) {
+        setState(AppState::Playing, nowMs);
+      }
+      Serial.println("[input] BOOT hold locked reader playback");
+      return;
+    }
+    cycleColorThemeMode(nowMs);
     return;
   }
 
@@ -1235,6 +1279,7 @@ uint8_t App::currentBrightnessPercent() const {
 void App::applyDisplayPreferences(uint32_t nowMs, bool rerender) {
   display_.setDarkMode(darkMode_);
   display_.setNightMode(nightMode_);
+  display_.setColorTheme(displayColorThemeForMode(colorThemeMode_));
   display_.setBrightnessPercent(currentBrightnessPercent());
 
   if (!rerender) {
@@ -1384,6 +1429,9 @@ void App::reloadRuntimePreferences(uint32_t nowMs, bool rerender) {
       kTypographyGuideGapMin, kTypographyGuideGapMax));
   darkMode_ = preferences_.getBool(kPrefDarkMode, darkMode_);
   nightMode_ = preferences_.getBool(kPrefNightMode, nightMode_);
+  colorThemeMode_ =
+      colorThemeModeFromSetting(preferences_.getUChar(
+          kPrefColorTheme, static_cast<uint8_t>(colorThemeMode_)));
 
   reader_.setWpm(preferences_.getUShort(kPrefWpm, reader_.wpm()));
   applyReaderUiOrientation();
@@ -1445,6 +1493,28 @@ void App::cycleThemeMode(uint32_t nowMs) {
   preferences_.putBool(kPrefDarkMode, darkMode_);
   preferences_.putBool(kPrefNightMode, nightMode_);
   Serial.printf("[display] theme=%s\n", themeModeLabel().c_str());
+  applyDisplayPreferences(nowMs);
+}
+
+void App::cycleColorThemeMode(uint32_t nowMs) {
+  switch (colorThemeMode_) {
+    case ColorThemeMode::Classic:
+      colorThemeMode_ = ColorThemeMode::Amber;
+      break;
+    case ColorThemeMode::Amber:
+      colorThemeMode_ = ColorThemeMode::Matrix;
+      break;
+    case ColorThemeMode::Matrix:
+      colorThemeMode_ = ColorThemeMode::Cyber;
+      break;
+    case ColorThemeMode::Cyber:
+    default:
+      colorThemeMode_ = ColorThemeMode::Classic;
+      break;
+  }
+
+  preferences_.putUChar(kPrefColorTheme, static_cast<uint8_t>(colorThemeMode_));
+  Serial.printf("[display] color theme=%s\n", colorThemeLabel().c_str());
   applyDisplayPreferences(nowMs);
 }
 
@@ -2349,6 +2419,7 @@ void App::rebuildFocusTimerGenreMenuItems() {
   focusTimerGenreMenuItems_.push_back("Work");
   focusTimerGenreMenuItems_.push_back("Fitness");
   focusTimerGenreMenuItems_.push_back("Self Care");
+  focusTimerGenreMenuItems_.push_back("Pomodoro");
   focusTimerGenreMenuItems_.push_back("Other");
 
   if (focusTimerGenreSelectedIndex_ >= focusTimerGenreMenuItems_.size()) {
@@ -2384,6 +2455,9 @@ void App::selectFocusTimerGenre(uint32_t nowMs) {
       genre = FocusTimer::Genre::SelfCare;
       break;
     case 5:
+      genre = FocusTimer::Genre::Pomodoro;
+      break;
+    case 6:
       genre = FocusTimer::Genre::Other;
       break;
     default:
@@ -2681,6 +2755,9 @@ void App::selectSettingsItem(uint32_t nowMs) {
         return;
       case kSettingsDisplayThemeIndex:
         cycleThemeMode(nowMs);
+        return;
+      case kSettingsDisplayColorThemeIndex:
+        cycleColorThemeMode(nowMs);
         return;
       case kSettingsDisplayBrightnessIndex:
         cycleBrightness();
@@ -3362,6 +3439,7 @@ void App::rebuildSettingsMenuItems() {
   } else if (menuScreen_ == MenuScreen::SettingsDisplay) {
     settingsMenuItems_.push_back(uiText(UiText::Back));
     settingsMenuItems_.push_back("Display mode: " + themeModeLabel());
+    settingsMenuItems_.push_back("Color theme: " + colorThemeLabel());
     settingsMenuItems_.push_back(uiText(UiText::Brightness) + ": " +
                                  String(currentBrightnessPercent()) + "%");
     settingsMenuItems_.push_back("Reader hand: " + handednessLabel());
@@ -3692,6 +3770,20 @@ String App::themeModeLabel() const {
     return uiText(UiText::Night);
   }
   return darkMode_ ? uiText(UiText::Dark) : uiText(UiText::Light);
+}
+
+String App::colorThemeLabel() const {
+  switch (colorThemeMode_) {
+    case ColorThemeMode::Amber:
+      return "Amber";
+    case ColorThemeMode::Matrix:
+      return "Matrix";
+    case ColorThemeMode::Cyber:
+      return "Cyber";
+    case ColorThemeMode::Classic:
+    default:
+      return "Classic";
+  }
 }
 
 String App::phantomWordsLabel() const {

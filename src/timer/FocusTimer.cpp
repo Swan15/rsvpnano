@@ -28,6 +28,8 @@ constexpr uint32_t kFeedbackMs = 900;
 constexpr uint32_t kTouchDurationMs = 2UL * 60UL * 1000UL;
 constexpr uint32_t kWorkDurationMs = 20UL * 60UL * 1000UL;
 constexpr uint32_t kBreakDurationMs = 5UL * 60UL * 1000UL;
+constexpr uint32_t kPomodoroWorkDurationMs = 25UL * 60UL * 1000UL;
+constexpr uint32_t kPomodoroBreakDurationMs = 5UL * 60UL * 1000UL;
 
 constexpr float kSideAxisThreshold = 0.78f;
 constexpr float kCrossAxisLimit = 0.42f;
@@ -60,7 +62,7 @@ void FocusTimer::update(uint32_t nowMs) {
 
     case State::WaitForTouchStart:
       if (orientationInputArmed(nowMs) && isShortSide(stableOrientation_)) {
-        startMode(TimerMode::Touch, nowMs, kTouchDurationMs, stableOrientation_);
+        startMode(TimerMode::Touch, nowMs, touchDurationMs(), stableOrientation_);
         transitionTo(State::TouchRunning, nowMs);
       }
       break;
@@ -78,10 +80,10 @@ void FocusTimer::update(uint32_t nowMs) {
         break;
       }
       if (stableOrientation_ == oppositeShortSide(lastShortSide_)) {
-        startMode(TimerMode::Work, nowMs, kWorkDurationMs, stableOrientation_);
+        startMode(TimerMode::Work, nowMs, workDurationMs(), stableOrientation_);
         transitionTo(State::WorkRunning, nowMs);
       } else if (stableOrientation_ == OrientationState::LongSide) {
-        startMode(TimerMode::Break, nowMs, kBreakDurationMs, OrientationState::LongSide);
+        startMode(TimerMode::Break, nowMs, breakDurationMs(), OrientationState::LongSide);
         transitionTo(State::BreakRunning, nowMs);
       }
       break;
@@ -99,10 +101,10 @@ void FocusTimer::update(uint32_t nowMs) {
         break;
       }
       if (stableOrientation_ == oppositeShortSide(lastShortSide_)) {
-        startMode(TimerMode::Work, nowMs, kWorkDurationMs, stableOrientation_);
+        startMode(TimerMode::Work, nowMs, workDurationMs(), stableOrientation_);
         transitionTo(State::WorkRunning, nowMs);
       } else if (stableOrientation_ == OrientationState::LongSide) {
-        startMode(TimerMode::Break, nowMs, kBreakDurationMs, OrientationState::LongSide);
+        startMode(TimerMode::Break, nowMs, breakDurationMs(), OrientationState::LongSide);
         transitionTo(State::BreakRunning, nowMs);
       }
       break;
@@ -117,7 +119,7 @@ void FocusTimer::update(uint32_t nowMs) {
 
     case State::WaitAfterBreak:
       if (orientationInputArmed(nowMs) && isShortSide(stableOrientation_)) {
-        startMode(TimerMode::Work, nowMs, kWorkDurationMs, stableOrientation_);
+        startMode(TimerMode::Work, nowMs, workDurationMs(), stableOrientation_);
         transitionTo(State::WorkRunning, nowMs);
       }
       break;
@@ -147,7 +149,7 @@ void FocusTimer::chooseGenre(Genre genre, uint32_t nowMs) {
   clearSession();
   genre_ = genre;
   resetOrientationStability();
-  transitionTo(State::WaitForTouchStart, nowMs);
+  transitionTo(genre == Genre::Pomodoro ? State::WaitAfterBreak : State::WaitForTouchStart, nowMs);
 }
 
 void FocusTimer::cancelActiveTimer(uint32_t nowMs) {
@@ -243,6 +245,8 @@ const char *FocusTimer::genreLabel(Genre genre) {
       return "Fitness";
     case Genre::SelfCare:
       return "Self Care";
+    case Genre::Pomodoro:
+      return "Pomodoro";
     case Genre::Other:
       return "Other";
     case Genre::None:
@@ -475,6 +479,16 @@ void FocusTimer::startMode(TimerMode mode, uint32_t nowMs, uint32_t durationMs,
   if (isShortSide(startOrientation)) {
     lastShortSide_ = startOrientation;
   }
+}
+
+uint32_t FocusTimer::touchDurationMs() const { return kTouchDurationMs; }
+
+uint32_t FocusTimer::workDurationMs() const {
+  return genre_ == Genre::Pomodoro ? kPomodoroWorkDurationMs : kWorkDurationMs;
+}
+
+uint32_t FocusTimer::breakDurationMs() const {
+  return genre_ == Genre::Pomodoro ? kPomodoroBreakDurationMs : kBreakDurationMs;
 }
 
 void FocusTimer::stopActiveTimer() {

@@ -170,10 +170,11 @@ OTA updates use GitHub Releases. Open `Settings -> Firmware update` on the devic
 - `PWR` hold in Companion Sync, USB Transfer, and Focus Timer: exit that page.
 - `PWR` hold from the normal reader or main menu: power off.
 - `BOOT` short press: cycle brightness.
-- `BOOT` hold: cycle display theme.
+- `BOOT` hold in the reader: start locked continuous play.
+- `BOOT` hold outside the reader: cycle color theme.
 - Press `PWR` + `BOOT` together: enter standby. Press either button to wake after the short standby grace period.
 
-The goal is simple: use `PWR` as menu, back, exit, and power. Use `BOOT` for quick display changes.
+The goal is simple: use `PWR` as menu, back, exit, and power. Use `BOOT` for quick display changes and quick reader start.
 
 ### Reader Controls
 

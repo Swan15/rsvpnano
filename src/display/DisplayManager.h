@@ -13,6 +13,13 @@ class DisplayManager {
     AtkinsonHyperlegible = 2,
   };
 
+  enum class ColorTheme : uint8_t {
+    Classic = 0,
+    Amber = 1,
+    Matrix = 2,
+    Cyber = 3,
+  };
+
   struct TypographyConfig {
     ReaderTypeface typeface = ReaderTypeface::Standard;
     bool focusHighlight = true;
@@ -63,12 +70,14 @@ class DisplayManager {
   void setBrightnessPercent(uint8_t percent);
   void setDarkMode(bool darkMode);
   void setNightMode(bool nightMode);
+  void setColorTheme(ColorTheme colorTheme);
   void setUiOrientation(BoardConfig::UiOrientation orientation);
   void setUiRotated180(bool rotated180);
   void setTypographyConfig(const TypographyConfig &config);
   TypographyConfig typographyConfig() const;
   bool darkMode() const;
   bool nightMode() const;
+  ColorTheme colorTheme() const;
   void prepareForSleep();
   bool wakeFromSleep();
   void renderCenteredWord(const String &word, uint16_t color = 0xFFFF);
@@ -195,6 +204,7 @@ class DisplayManager {
   uint8_t brightnessPercent_ = 100;
   bool darkMode_ = true;
   bool nightMode_ = false;
+  ColorTheme colorTheme_ = ColorTheme::Classic;
   BoardConfig::UiOrientation uiOrientation_ =
       BoardConfig::UI_ROTATED_180 ? BoardConfig::UiOrientation::LandscapeFlipped
                                   : BoardConfig::UiOrientation::Landscape;

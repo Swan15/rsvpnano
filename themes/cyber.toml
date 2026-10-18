@@ -1,0 +1,10 @@
+name = "Cyber"
+
+[colors]
+background = "#000000"
+foreground = "#98E2FF"
+accent = "#FF55C6"
+accentBar = "#FF55C6"
+breakAccent = "#4C92E0"
+onAccent = "#000000"
+guideFocus = "#FF55C6"

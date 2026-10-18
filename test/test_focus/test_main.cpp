@@ -82,6 +82,41 @@ void test_focus_config_round_trip_and_validation() {
     TEST_ASSERT_EQUAL(focus::kMaxTimers, parsed->timers.size());
 }
 
+void test_default_presets_complete_full_focus_and_break_blocks() {
+    const auto presets = focus::defaultTimers();
+    TEST_ASSERT_EQUAL(2, presets.timers.size());
+    TEST_ASSERT_EQUAL_STRING("Pomodoro", presets.timers[0].name.c_str());
+    TEST_ASSERT_EQUAL(25, presets.timers[0].focusMinutes);
+    TEST_ASSERT_EQUAL(5, presets.timers[0].breakMinutes);
+    TEST_ASSERT_EQUAL_STRING("Pomodoro 50/10", presets.timers[1].name.c_str());
+    TEST_ASSERT_EQUAL(50, presets.timers[1].focusMinutes);
+    TEST_ASSERT_EQUAL(10, presets.timers[1].breakMinutes);
+    const auto encoded = focus::encodeToml(presets);
+    TEST_ASSERT_TRUE(encoded.has_value());
+    const auto decoded = focus::decodeToml(*encoded);
+    TEST_ASSERT_TRUE(decoded.has_value());
+    TEST_ASSERT_EQUAL(2, decoded->timers.size());
+
+    for (const auto& preset: decoded->timers) {
+        focus::Session session;
+        session.begin(preset);
+        session.update(1000, focus::Orientation::ShortA);
+        TEST_ASSERT_EQUAL(focus::Phase::Focus, session.phase());
+        const uint32_t focusEnd = 1000U + preset.focusMinutes * 60000U;
+        session.update(focusEnd - 1, focus::Orientation::ShortA);
+        TEST_ASSERT_EQUAL(focus::Phase::Focus, session.phase());
+        session.update(focusEnd, focus::Orientation::ShortA);
+        TEST_ASSERT_EQUAL(focus::Phase::WaitingBreak, session.phase());
+        session.update(focusEnd + 1, focus::Orientation::ShortB);
+        TEST_ASSERT_EQUAL(focus::Phase::Break, session.phase());
+        const uint32_t breakEnd = focusEnd + 1U + preset.breakMinutes * 60000U;
+        session.update(breakEnd - 1, focus::Orientation::ShortB);
+        TEST_ASSERT_EQUAL(focus::Phase::Break, session.phase());
+        session.update(breakEnd, focus::Orientation::ShortB);
+        TEST_ASSERT_EQUAL(focus::Phase::WaitingFocus, session.phase());
+    }
+}
+
 void test_focus_session_flip_pause_and_completion() {
     focus::Session session;
     session.begin(shortTimer());
@@ -130,6 +165,7 @@ void test_focus_session_requires_post_expiry_flip_and_handles_wraparound() {
 int main(int, char**) {
     UNITY_BEGIN();
     RUN_TEST(test_focus_config_round_trip_and_validation);
+    RUN_TEST(test_default_presets_complete_full_focus_and_break_blocks);
     RUN_TEST(test_focus_session_flip_pause_and_completion);
     RUN_TEST(test_focus_session_requires_post_expiry_flip_and_handles_wraparound);
     return UNITY_END();

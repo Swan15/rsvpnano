@@ -3,6 +3,11 @@
 Copy this `themes` folder to the SD card root. The device loads `*.toml` files from `/themes`
 at startup and appends valid themes after the built-in default theme.
 
+This fork includes Amber, Matrix, and Cyber, preserving the reader and focus-highlight
+colors from its original custom themes. Copy their `.toml` files to `/themes` on the
+SD card, or upload them through the companion's theme manager, then select a theme
+in the appearance settings. Classic corresponds to the built-in Default theme.
+
 Theme files are plain text:
 
 ```toml

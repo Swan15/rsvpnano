@@ -1,0 +1,10 @@
+name = "Amber"
+
+[colors]
+background = "#000000"
+foreground = "#FFBE60"
+accent = "#FF6C36"
+accentBar = "#FF6C36"
+breakAccent = "#CC7A34"
+onAccent = "#000000"
+guideFocus = "#FF6C36"

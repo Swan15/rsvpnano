@@ -31,6 +31,11 @@ namespace focus {
     Timers defaultTimers() {
         Timers timers;
         timers.timers.push_back(defaultTimer());
+        Timer longPomodoro = defaultTimer();
+        longPomodoro.name = "Pomodoro 50/10";
+        longPomodoro.focusMinutes = 50;
+        longPomodoro.breakMinutes = 10;
+        timers.timers.push_back(std::move(longPomodoro));
         return timers;
     }
 

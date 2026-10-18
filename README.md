@@ -45,6 +45,10 @@ card content before testing new firmware.
 
 ## Highlights
 
+This fork tracks upstream v0.1.2 and includes Amber, Matrix, and Cyber themes plus
+25/5 and 50/10 Pomodoro defaults. See [fork setup and upgrade notes](docs/fork-upgrade.md)
+for SD card setup, the original 3.49-inch board build, and hardware capabilities.
+
 - **Two reading modes:** focused RSVP playback and paragraph-aware page reading.
 - **Multilingual text:** bidirectional text, Arabic and Hebrew shaping, CJK fonts, and vertical CJK
   books.

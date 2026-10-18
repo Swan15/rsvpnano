@@ -1,5 +1,11 @@
 [
   {
+    "id": "amber",
+    "name": "Amber",
+    "file": "amber.toml",
+    "typeface": "literata"
+  },
+  {
     "id": "catppuccin-frappe",
     "name": "Catppuccin Frappe",
     "file": "catppuccin-frappe.toml",
@@ -24,6 +30,12 @@
     "typeface": "literata"
   },
   {
+    "id": "cyber",
+    "name": "Cyber",
+    "file": "cyber.toml",
+    "typeface": "literata"
+  },
+  {
     "id": "dracula",
     "name": "Dracula",
     "file": "dracula.toml",
@@ -45,6 +57,12 @@
     "id": "light",
     "name": "Light",
     "file": "light.toml",
+    "typeface": "literata"
+  },
+  {
+    "id": "matrix",
+    "name": "Matrix",
+    "file": "matrix.toml",
     "typeface": "literata"
   },
   {

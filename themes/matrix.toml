@@ -1,0 +1,10 @@
+name = "Matrix"
+
+[colors]
+background = "#000000"
+foreground = "#74FF88"
+accent = "#21D85A"
+accentBar = "#21D85A"
+breakAccent = "#2A9A50"
+onAccent = "#000000"
+guideFocus = "#21D85A"

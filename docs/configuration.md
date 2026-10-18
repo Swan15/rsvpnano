@@ -79,7 +79,17 @@ name = "Pomodoro"
 focusMinutes = 25
 breakMinutes = 5
 rounds = 4
+
+[[timers]]
+name = "Pomodoro 50/10"
+focusMinutes = 50
+breakMinutes = 10
+rounds = 4
 ```
+
+This fork starts with both presets when no saved timer configuration is available.
+Existing saved routines are retained; add the 50/10 preset in the Focus editor or
+companion app if you already have a `/config/focus.toml` file.
 
 Timer names are limited to 14 UTF-8 bytes. Durations and round counts are clamped to their
 supported ranges.

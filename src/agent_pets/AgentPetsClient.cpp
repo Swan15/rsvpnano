@@ -3,6 +3,7 @@
 #include <HTTPClient.h>
 #include <NetworkClientSecure.h>
 #include <WiFi.h>
+#include <esp_log.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <time.h>
@@ -120,12 +121,14 @@ void Client::run() {
 }
 
 bool Client::poll() {
+  const uint32_t started = millis();
   NetworkClientSecure socket;
   socket.setCACert(ca_.c_str());
-  socket.setHandshakeTimeout(2);
+  // Certificate verification on the ESP32 can outlast a desktop TLS handshake.
+  socket.setHandshakeTimeout(10);
   HTTPClient http;
-  http.setConnectTimeout(1500);
-  http.setTimeout(2000);
+  http.setConnectTimeout(5000);
+  http.setTimeout(5000);
   http.setFollowRedirects(HTTPC_DISABLE_FOLLOW_REDIRECTS);
   if (!http.begin(socket, config_.url.c_str())) {
     message("Could not open secure feed");
@@ -135,7 +138,10 @@ bool Client::poll() {
   const int code = http.GET();
   const int size = http.getSize();
   if (code != 200 || size < 0 || size > static_cast<int>(kMaxSnapshotBytes)) {
-    message(code == 401 ? "Feed token rejected" : "Feed offline - showing last update");
+    ESP_LOGW("agent-pets", "Feed request failed: HTTP %d, size %d, elapsed %lu ms, RSSI %d",
+             code, size, static_cast<unsigned long>(millis() - started), WiFi.RSSI());
+    message(code == 401 ? "Feed token rejected"
+                       : "Feed offline (HTTP " + std::to_string(code) + ")");
     http.end();
     return false;
   }

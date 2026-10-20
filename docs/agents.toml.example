@@ -1,0 +1,5 @@
+# Copy to /config/agents.toml on the Nano SD card.
+# Use a device-only token from the status bridge, never a T3 control-plane token.
+url = "https://your-vps.example/nano-pets/v1/status"
+token = "REPLACE_WITH_YOUR_DEVICE_TOKEN_32_OR_MORE_LETTERS_AND_DIGITS"
+caFile = "/config/agent-ca.pem"

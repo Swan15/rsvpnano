@@ -30,7 +30,7 @@ namespace screens {
         ui::Rect encryptionButton;
         ui::Grid actions;
         if (content.w >= 280) {
-            constexpr int16_t statusHeight = 60;
+            constexpr int16_t statusHeight = 48;
             const int16_t statusWidth = static_cast<int16_t>((content.w - gap) / 2);
             storageButton = {content.x, content.y, statusWidth, statusHeight};
             encryptionButton = {static_cast<int16_t>(content.x + statusWidth + gap), content.y,
@@ -39,10 +39,10 @@ namespace screens {
             const int16_t actionsHeight = static_cast<int16_t>(content.y + content.h - actionsY);
             actions = {{content.x, actionsY, content.w, actionsHeight},
                        2,
-                       static_cast<int16_t>((actionsHeight - gap) / 2),
+                       static_cast<int16_t>((actionsHeight - gap * 2) / 3),
                        gap};
         } else {
-            ui::Grid all{content, 1, static_cast<int16_t>((content.h - gap * 5) / 6), gap};
+            ui::Grid all{content, 1, static_cast<int16_t>((content.h - gap * 6) / 7), gap};
             storageButton = all.next();
             encryptionButton = all.next();
             actions = all;
@@ -63,6 +63,8 @@ namespace screens {
             encryptionControlsVisible = false;
             screen = Screen::StorageEncryption;
         }
+        if (ui.button(actions.next(), "Agent pets"))
+            return Action::AgentPets;
         if (ui.button(actions.next(), ui.text(UiText::UsbTransfer), true, ui::Icon::None, 2))
             return Action::UsbTransfer;
         if (ui.button(actions.next(), ui.text(UiText::CompanionSync), true, ui::Icon::None, 2))

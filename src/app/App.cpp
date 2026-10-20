@@ -111,6 +111,9 @@ void App::update(uint32_t nowMs) {
     }
 
     updateBackgroundJob();
+    if (agentPetsClient_.active()
+        && (screen_ != screens::Screen::AgentPets || serialCompanion_.active()))
+        agentPetsClient_.end();
     const bool preparingTypography = typographyJobActive();
 
     if (backgroundJobActive() && !preparingTypography)
@@ -163,6 +166,7 @@ void App::update(uint32_t nowMs) {
     renderScreen(nowMs);
     if (!preparingTypography && !readerScreen_.session.playing && !companionApi_.active() && !usbTransfer_.active()
         && screen_ != screens::Screen::FocusSession && screen_ != screens::Screen::Status
+        && screen_ != screens::Screen::AgentPets
         && kStandbyMs[settingsStore_.settings().interface.standbyTimerIndex] > 0
         && nowMs - lastActivityMs_ >= kStandbyMs[settingsStore_.settings().interface.standbyTimerIndex]) {
         enterStandby(nowMs);
@@ -177,6 +181,10 @@ void App::renderScreen(uint32_t nowMs) {
     const screens::Screen renderedScreen = screen_;
     screens::Action action = screens::Action::None;
     switch (screen_) {
+    case screens::Screen::AgentPets:
+        if (agentPetsScreen_.due(immediateUi_, nowMs))
+            agentPetsScreen_.draw(immediateUi_, agentPetsClient_.view(nowMs), nowMs, screen_);
+        return;
     case screens::Screen::Status:
         screens::status(immediateUi_, immediateUi_.text(UiText::Ready));
         return;
@@ -355,6 +363,15 @@ void App::handleScreenAction(screens::Action action, uint32_t nowMs) {
         screen_ = screens::Screen::Reader;
         renderScreen(nowMs);
         return;
+    case screens::Action::AgentPets:
+        ReadingLoop::pause(readerScreen_.session);
+        screen_ = screens::Screen::AgentPets;
+        agentPetsScreen_.reset();
+        if (storage_.mounted())
+            agentPetsClient_.begin(Board::Storage::filesystem(), settingsStore_.settings().network.ssid,
+                                   settingsStore_.secrets().wifiPassword);
+        renderScreen(nowMs);
+        return;
     case screens::Action::PowerOff:
         powerOff(nowMs);
         return;
@@ -399,6 +416,13 @@ void App::handleScreenAction(screens::Action action, uint32_t nowMs) {
 }
 
 void App::handleInput(Input::ActionMask actions, uint32_t nowMs) {
+    if (screen_ == screens::Screen::AgentPets
+        && (Input::hasAction(actions, Input::ActionBack) || Input::hasAction(actions, Input::ActionOpenMenu))) {
+        agentPetsClient_.end();
+        screen_ = screens::Screen::Device;
+        renderScreen(nowMs);
+        return;
+    }
     if (serialCompanion_.active()) {
         if (Input::hasAction(actions, Input::ActionBack) || Input::hasAction(actions, Input::ActionOpenMenu)) {
             serialCompanion_.close();
@@ -891,6 +915,7 @@ void App::runOtaCheck(bool install) {
 }
 
 void App::enterStandby(uint32_t nowMs) {
+    agentPetsClient_.end();
     if (companionApi_.active()) {
         companionApi_.end();
     } else {

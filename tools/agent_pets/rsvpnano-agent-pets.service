@@ -1,0 +1,17 @@
+[Unit]
+Description=Read-only T3 agent pets feed for RSVP Nano
+After=network.target t3-serve.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 %h/.local/share/rsvpnano-agent-pets/bridge.py --database %h/.t3/userdata/statev2.sqlite --token-file %h/.config/rsvpnano-agent-pets/token --source chermes-router --bind 127.0.0.1 --port 3948
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+UMask=0077
+MemoryMax=128M
+CPUQuota=20%
+TimeoutStopSec=5
+
+[Install]
+WantedBy=default.target

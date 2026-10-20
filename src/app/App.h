@@ -5,6 +5,8 @@
 
 #include <string>
 #include <string_view>
+#include "agent_pets/AgentPetsClient.h"
+#include "ui/screens/AgentPetsScreen.h"
 
 #include "board/BoardDisplay.h"
 #include "board/BoardPower.h"
@@ -101,6 +103,8 @@ private:
     UsbMassStorageManager usbTransfer_;
     CompanionSerial serialCompanion_{companionApi_, usbTransfer_};
     screens::StandbyScreen standbyScreen_;
+    agentpets::Client agentPetsClient_;
+    screens::AgentPetsScreen agentPetsScreen_;
     QueueHandle_t jobQueue_ = nullptr;
     JobKind jobKind_ = JobKind::None;
     size_t jobBookIndex_ = 0;

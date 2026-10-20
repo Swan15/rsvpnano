@@ -49,14 +49,24 @@ class BridgeTests(unittest.TestCase):
             db.execute('INSERT INTO orchestration_v2_projection_runtime_requests VALUES(?,?,?)',
                        ('attention', 'user_input', 'pending'))
         agents = self.source.snapshot()['agents']
-        self.assertEqual([a['id'] for a in agents], ['attention', 'working'])
+        self.assertEqual([a['id'] for a in agents], [bridge.device_id('attention'), bridge.device_id('working')])
         self.assertEqual([a['state'] for a in agents], ['waiting', 'error'])
 
     def test_archived_and_settled_terminal_threads_are_hidden(self):
         self.thread('archived', archived='2026-01-01')
         self.thread('settled', 'completed', settled='2026-01-01')
         self.thread('active', settled='2026-01-01')
-        self.assertEqual([a['id'] for a in self.source.snapshot()['agents']], ['active'])
+        self.assertEqual([a['id'] for a in self.source.snapshot()['agents']], [bridge.device_id('active')])
+
+    def test_long_thread_ids_keep_distinct_stable_device_ids(self):
+        prefix = 'thread:' + 'x' * 100
+        self.thread(prefix + '/first')
+        self.thread(prefix + '/second')
+        first = self.source.snapshot()['agents']
+        second = self.source.snapshot()['agents']
+        self.assertEqual(len({a['id'] for a in first}), 2)
+        self.assertTrue(all(len(a['id']) == 64 for a in first))
+        self.assertEqual([a['id'] for a in first], [a['id'] for a in second])
 
     def test_bounded_metadata_only(self):
         for i in range(12):

@@ -51,6 +51,8 @@ The bridge opens `~/.t3/userdata/statev2.sqlite` using SQLite read-only mode and
 query-only connections. It reads thread/project/run/request metadata, never
 conversation messages, tool arguments, or credentials. The indexed latest-run
 query has a two-second limit, and connections close after each snapshot.
+Thread IDs are converted to stable SHA-256 identifiers so long T3 IDs with shared
+prefixes remain distinct on the device.
 
 T3 remains on its existing service. The bridge makes no T3 control requests and
 only checks that the local T3 listener is reachable. If T3 or its database is

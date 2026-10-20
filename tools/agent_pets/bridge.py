@@ -6,6 +6,7 @@ import argparse
 from contextlib import closing
 from datetime import datetime, timedelta, timezone
 import hmac
+import hashlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 from pathlib import Path
@@ -32,6 +33,11 @@ def pet_state(status: str | None, pending: int) -> tuple[str, str]:
     if status == 'completed':
         return 'done', 'Finished'
     return 'idle', 'Queued' if status == 'queued' else 'Idle'
+
+
+def device_id(identifier: str) -> str:
+    # T3 IDs can be long paths sharing a prefix; truncation loses identity.
+    return hashlib.sha256(identifier.encode('utf-8')).hexdigest()
 
 
 class T3Source:
@@ -81,7 +87,7 @@ class T3Source:
         agents = []
         for identifier, title, project, status, pending, _ in rows:
             state, detail = pet_state(status, pending)
-            agents.append(dict(id=clean(identifier, 64), name=clean(title, 60) or 'Untitled agent',
+            agents.append(dict(id=device_id(identifier), name=clean(title, 60) or 'Untitled agent',
                                project=clean(project, 40), state=state, detail=detail))
         result = dict(version=1, source=self.source,
                       updatedAt=now.isoformat().replace('+00:00', 'Z'), agents=agents)
